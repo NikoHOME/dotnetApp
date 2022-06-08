@@ -364,19 +364,19 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\Wiktor\\.nuget\\packages\\": {}
+    "C:\\Users\\LinusLite\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Cpp\\netApp\\netApp.csproj",
+      "projectUniqueName": "c:\\Cpp\\git\\netApp\\netApp.csproj",
       "projectName": "netApp",
-      "projectPath": "C:\\Cpp\\netApp\\netApp.csproj",
-      "packagesPath": "C:\\Users\\Wiktor\\.nuget\\packages\\",
-      "outputPath": "C:\\Cpp\\netApp\\obj\\",
+      "projectPath": "c:\\Cpp\\git\\netApp\\netApp.csproj",
+      "packagesPath": "C:\\Users\\LinusLite\\.nuget\\packages\\",
+      "outputPath": "c:\\Cpp\\git\\netApp\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\Wiktor\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\LinusLite\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
@@ -422,7 +422,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\5.0.408\\RuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\5.0.400\\RuntimeIdentifierGraph.json"
       }
     }
   }

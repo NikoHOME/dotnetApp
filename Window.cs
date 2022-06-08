@@ -1,5 +1,5 @@
 using System;
-using System.Security.Cryptography;
+using OpenTK.Graphics.OpenGL4;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using OpenTK.Windowing.Desktop;
@@ -21,136 +21,22 @@ namespace Snake
         
         //Console.WriteLine(board[19,14]);
         //Console.WriteLine(board[19,15]);
-        class Pair
+
+        private readonly float[] vertices =
         {
-            public int first,second;
+            -0.5f, -0.5f, 0.0f, // Bottom-left vertex
+             0.5f, -0.5f, 0.0f, // Bottom-right vertex
+             0.0f,  0.5f, 0.0f  // Top vertex
+        };
 
-            public Pair(int x,int y)
-            {
-                this.first=x;
-                this.second=y;
-            }
-        }
-        class RandomNum 
-        {
-            public int randX,randY;
-            public RandomNum()
-            {
-                Random rd = new Random();
-                randX=rd.Next(0,40);
-                randY=rd.Next(0,30);
-            }
-        }
-        
+        private int VAO,VBO;
 
 
-        class snakeVars
-        {
-            public int dir,posX,posY,fruitX,fruitY;
-            public bool [,] board = new bool[40,30];
-            public Pair[] queue = new Pair[1201]; //Looping queue expanding backwards with eveyr fruit
-            public int end,begin,iter; //Queue pointers  "begin" "end" and "iter" (head position)
-            public bool gameOver;
-
-            public snakeVars() //Initialize starting vars
-            {
-                RandomNum random = new RandomNum();
-                end=1200;
-                begin=1194;
-                iter=1194;
-                posX=19;
-                posY=14;
-                fruitX=random.randX;
-                fruitY=random.randY;
-                gameOver=false;
-                //Declare starting snake
-                queue[1194]= new Pair(19,8);    queue[1195]= new Pair(19,9);
-                queue[1196]= new Pair(19,10);   queue[1197]= new Pair(19,11);
-                queue[1198]= new Pair(19,12);   queue[1199]= new Pair(19,13);
-                queue[1200]= new Pair(19,14);
-
-                board[19,8]=true;   board[19,9]=true;
-                board[19,10]=true;  board[19,11]=true;
-                board[19,12]=true;  board[19,13]=true;
-                board[19,14]=true;
-            }
-
-            public void moveSnake()
-            {   
-                 //Move to currently faced dir
-                switch(dir) 
-                {
-                    case 0:
-                        ++posY;
-                    break;
-                    case 1:
-                        --posY;
-                    break;
-                    case 2:
-                        --posX;
-                    break;
-                    case 3:
-                        ++posX;
-                    break;
-                }
-                if(posX>39 || posX<0 || posY>29 || posY<0) //Check if out of bounds
-                {
-                    gameOver=true;
-                    return;
-                }
-
-                if(board[posX,posY]) //Check if snake collides with its tail
-                {
-                    gameOver=true;
-                    return;
-                }
-
-                if(posX==fruitX && posY==fruitY) // Check if it ate a fruit
-                {
-                    
-                    --begin;
-                    --iter;
-                    RandomNum random = new RandomNum();
-                    while(board[random.randX,random.randY]) //Randomize until its not on snake's tail
-                    {
-                        random = new RandomNum();
-                    }
-                    fruitX=random.randX;
-                    fruitY=random.randY;
-                    queue[begin]= new Pair(0,0); //Update the queue
-                    for(int i=begin;i<iter;++i)
-                    {
-                        Pair tempPair = queue[i];
-                        queue[i]= queue[i+1];
-                        queue[i+1] = tempPair;
-                    }
-
-                }
-                board[queue[iter].first,queue[iter].second]=false; //Remove the Tail
-                queue[iter]= new Pair(posX,posY);
-                board[posX,posY]=true; //Add the Head
-                if(iter<end) {++iter;} //Move foward in queue
-                else {iter=begin;}
-
-            }
-        }
-
-
-        snakeVars snake = new snakeVars();
+        snakeVars snake = new snakeVars(); //Initialize the snake
 
         public void Debug() 
         {
-            /*
-            Console.WriteLine(snake.posX + " " + snake.posY + " " + snake.fruitX + " " + snake.fruitY + " " +snake.begin + " " +snake.iter + " " + snake.end);
-            
-            for(int i=snake.begin;i<=snake.end;++i)
-            {
-                Console.WriteLine(snake.queue[i].first + " " + snake.queue[i].second);
-            }
-            
-            Console.WriteLine("");
-            */
-             for(int i=29;i>=0;--i)         //Output to console
+            for(int i=29;i>=0;--i)         //Output to console
             {
                 for(int j=0;j<40;++j) 
                 {
@@ -241,8 +127,42 @@ namespace Snake
             }       
         }
         
-       
 
+       
+        protected override void OnLoad()
+        {
+
+            GL.ClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+
+            VBO = GL.GenBuffer();
+
+            GL.BindBuffer(BufferTarget.ArrayBuffer,VBO);
+            
+            GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices, BufferUsageHint.StaticDraw);
+
+            VAO = GL.GenVertexArray();
+            GL.BindVertexArray(VAO);
+
+            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
+            GL.EnableVertexAttribArray(0);
+
+
+            base.OnLoad();
+
+        }
+         protected override void OnRenderFrame(FrameEventArgs e)
+        {
+
+            GL.Clear(ClearBufferMask.ColorBufferBit);
+            
+            GL.BindVertexArray(VAO);
+            GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
+
+            SwapBuffers();
+
+            base.OnRenderFrame(e);
+
+        }
     
         protected override void OnUpdateFrame(FrameEventArgs e)// This function runs on every update frame.
         {
@@ -259,6 +179,10 @@ namespace Snake
             updateSnakeDir(); //Check for keys pressed and a ticks
             tick();
             base.OnUpdateFrame(e);
+        }
+        protected override void OnUnload()
+        {
+            base.OnUnload();
         }
     }
 }
