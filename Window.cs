@@ -25,9 +25,10 @@ namespace Snake
 
         private readonly float[] vertices =
         {
-            -0.5f, -0.5f, 0.0f, // Bottom-left vertex
-             0.5f, -0.5f, 0.0f, // Bottom-right vertex
-             0.0f,  0.5f, 0.0f  // Top vertex
+            -0.9f, -0.9f, 0.0f, 
+            0.9f, -0.9f, 0.0f, 
+            0.9f,  0.45f, 0.0f,
+            -0.9f, 0.45f, 0.0f   
         };
 
         public class snakePart
@@ -40,6 +41,7 @@ namespace Snake
 
         private int[] VAO = new int[2];
         private int[] VBO = new int[2];
+        private int EBO;
 
 
         snakeVars snake = new snakeVars(); //Initialize the snake
@@ -137,7 +139,7 @@ namespace Snake
             }       
         }
         
-
+        
        
         protected override void OnLoad()
         {
@@ -162,6 +164,8 @@ namespace Snake
 
             GL.BufferData(BufferTarget.ArrayBuffer, 1201*8*sizeof(float), IntPtr.Zero, BufferUsageHint.DynamicDraw);
 
+            
+            
             VAO[1] = GL.GenVertexArray();
             GL.BindVertexArray(VAO[1]);
 
@@ -169,39 +173,97 @@ namespace Snake
             GL.EnableVertexAttribArray(0);
 
 
+            EBO = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, EBO);
+            GL.BufferData(BufferTarget.ElementArrayBuffer, 1201*3*sizeof(uint), IntPtr.Zero, BufferUsageHint.DynamicDraw);
+
+
             base.OnLoad();
 
         }
+
+        
+
+        float offset = 0.045f;
+        List<float> snakeVerticesList = new List<float>();
+        List<uint> snakeIndices = new List<uint>();
+
          protected override void OnRenderFrame(FrameEventArgs e)
         {
 
             GL.Clear(ClearBufferMask.ColorBufferBit);
             
             GL.BindVertexArray(VAO[0]);
-            GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
+            GL.DrawArrays(PrimitiveType.LineLoop, 0, 4);
 
-            List<float> snakeVerticesList = new List<float>();
-            float[] node =
+            snakeVerticesList = new List<float>();
+            
+            for(int i=snake.begin;i<=snake.end;++i)
             {
-                -0.9f, -0.9f, 0.0f, 
-                -0.9f, -0.8f, 0.0f,  
-                -0.8f, -0.8f, 0.0f,
-                -0.8f, -0.9f, 0.0f
+                float posX=snake.queue[i].first*offset;
+                float posY=snake.queue[i].second*offset;
+                float[] node =
+                {
+                    -0.9f+posX, -0.9f+posY, 0.0f, 
+                    -0.9f+posX, -0.855f+posY, 0.0f,  
+                    -0.855f+posX, -0.855f+posY, 0.0f,
+                    -0.855f+posX, -0.9f+posY, 0.0f
+                };
+                //Console.WriteLine(posX + " " + posY);
+                snakeVerticesList.AddRange(node);
+            }
+            
+            float[] snakeVertices = snakeVerticesList.ToArray();
+            
+            /*
+            
+            float[] node ={
+            -0.9f, -0.625f, 0.0f, 
+            -0.9f, -0.580f, 0.0f,  
+             -0.855f, -0.580f, 0.0f,
+             -0.855f, -0.625f, 0.0f,
             };
             snakeVerticesList.AddRange(node);
             float[] snakeVertices = snakeVerticesList.ToArray();
-            /*
+            */
+            
+            snakeIndices = new List<uint>();
+
+            for(uint i=0;i<snakeVertices.Length/3;i+=4)
             {
-            -0.9f, -0.9f, 0.0f, 
-            -0.9f, -0.8f, 0.0f,  
-             -0.8f, -0.9f, 0.0f,
-             -0.8f, -0.8f, 0.0f,
+                uint[] node = 
+                {
+                    i,i+1,i+3,
+                    i+1,i+3,i+2
+                };
+                snakeIndices.AddRange(node);
+            }
+
+            uint[] indices = snakeIndices.ToArray();
+
+
+            /*
+            uint[] indices = {  
+                0, 1, 3,   
+                1, 3, 2,
+                4, 5, 7,
+                5, 7, 6,
+                8, 9, 11,
+                11, 9, 10    
             };
             */
+
+
+
             GL.BindBuffer(BufferTarget.ArrayBuffer,VBO[1]);
-            GL.BufferSubData(BufferTarget.ArrayBuffer,(IntPtr)0,sizeof(float)*7*3,snakeVertices);
+            GL.BufferSubData(BufferTarget.ArrayBuffer,(IntPtr)0,sizeof(float)*snakeVertices.Length,snakeVertices);
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, EBO);
+            GL.BufferSubData(BufferTarget.ElementArrayBuffer,(IntPtr)0,sizeof(uint)*indices.Length,indices);
             GL.BindVertexArray(VAO[1]);
-            GL.DrawArrays(PrimitiveType.LineLoop, 0, 4);
+
+
+            //GL.DrawArrays(PrimitiveType.Triangles, 0, snakeVertices.Length);
+            GL.DrawElements(PrimitiveType.Triangles, indices.Length, DrawElementsType.UnsignedInt, 0);
 
 
 
@@ -221,6 +283,7 @@ namespace Snake
             if(snake.gameOver) 
             {
                 Console.WriteLine("Game Over");
+                foreach(float i in snakeVerticesList) {Console.Write(i + ", ");}
                 Close();
             }
             updateSnakeDir(); //Check for keys pressed and a ticks
