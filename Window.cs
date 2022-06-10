@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
@@ -10,7 +11,7 @@ namespace Snake
     
     // This is where all OpenGL code will be written.
     // OpenToolkit allows for several functions to be overriden to extend functionality; this is how we'll be writing code.
-    public class Window : GameWindow
+    public unsafe class Window : GameWindow
     {
         // A simple constructor to let us set properties like window size, title, FPS, etc. on the window.
         public Window(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings)
@@ -29,7 +30,16 @@ namespace Snake
              0.0f,  0.5f, 0.0f  // Top vertex
         };
 
-        private int VAO,VBO;
+        public class snakePart
+        {
+            public float[] position= new float[3];
+            public float[] colour  = new float[4];
+        }
+
+        public snakePart[] snakeParts = new  snakePart[1201];
+
+        private int[] VAO = new int[2];
+        private int[] VBO = new int[2];
 
 
         snakeVars snake = new snakeVars(); //Initialize the snake
@@ -134,14 +144,26 @@ namespace Snake
 
             GL.ClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 
-            VBO = GL.GenBuffer();
+            VBO[0] = GL.GenBuffer();
 
-            GL.BindBuffer(BufferTarget.ArrayBuffer,VBO);
+            GL.BindBuffer(BufferTarget.ArrayBuffer,VBO[0]);
             
             GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices, BufferUsageHint.StaticDraw);
 
-            VAO = GL.GenVertexArray();
-            GL.BindVertexArray(VAO);
+            VAO[0] = GL.GenVertexArray();
+            GL.BindVertexArray(VAO[0]);
+
+            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
+            GL.EnableVertexAttribArray(0);
+
+            VBO[1] = GL.GenBuffer();
+
+            GL.BindBuffer(BufferTarget.ArrayBuffer,VBO[1]);
+
+            GL.BufferData(BufferTarget.ArrayBuffer, 1201*8*sizeof(float), IntPtr.Zero, BufferUsageHint.DynamicDraw);
+
+            VAO[1] = GL.GenVertexArray();
+            GL.BindVertexArray(VAO[1]);
 
             GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
             GL.EnableVertexAttribArray(0);
@@ -155,8 +177,33 @@ namespace Snake
 
             GL.Clear(ClearBufferMask.ColorBufferBit);
             
-            GL.BindVertexArray(VAO);
+            GL.BindVertexArray(VAO[0]);
             GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
+
+            List<float> snakeVerticesList = new List<float>();
+            float[] node =
+            {
+                -0.9f, -0.9f, 0.0f, 
+                -0.9f, -0.8f, 0.0f,  
+                -0.8f, -0.8f, 0.0f,
+                -0.8f, -0.9f, 0.0f
+            };
+            snakeVerticesList.AddRange(node);
+            float[] snakeVertices = snakeVerticesList.ToArray();
+            /*
+            {
+            -0.9f, -0.9f, 0.0f, 
+            -0.9f, -0.8f, 0.0f,  
+             -0.8f, -0.9f, 0.0f,
+             -0.8f, -0.8f, 0.0f,
+            };
+            */
+            GL.BindBuffer(BufferTarget.ArrayBuffer,VBO[1]);
+            GL.BufferSubData(BufferTarget.ArrayBuffer,(IntPtr)0,sizeof(float)*7*3,snakeVertices);
+            GL.BindVertexArray(VAO[1]);
+            GL.DrawArrays(PrimitiveType.LineLoop, 0, 4);
+
+
 
             SwapBuffers();
 
