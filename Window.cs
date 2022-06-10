@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Windows.Input;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
@@ -39,8 +40,8 @@ namespace Snake
 
         public snakePart[] snakeParts = new  snakePart[1201];
 
-        private int[] VAO = new int[2];
-        private int[] VBO = new int[2];
+        private int[] VAO = new int[5]; //0 - stage 1-snake body 2-fruit 3-tail 4-head
+        private int[] VBO = new int[5];
         private int EBO;
 
 
@@ -125,7 +126,7 @@ namespace Snake
         }
 
         DateTime currentTime, previousTime=DateTime.Now;
-        int ticksPerSecond=1000/2, boostLimit=1000/4;
+        int ticksPerSecond=1000/5, boostLimit=1000/8;
 
         public void tick() // Execute by tickrate
         {
@@ -135,7 +136,7 @@ namespace Snake
                 previousTime=currentTime;
                 snake.moveSnake();
                 if(snake.gameOver)  {return;}
-                Debug();
+                //Debug();
             }       
         }
         
@@ -149,7 +150,6 @@ namespace Snake
             VBO[0] = GL.GenBuffer();
 
             GL.BindBuffer(BufferTarget.ArrayBuffer,VBO[0]);
-            
             GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices, BufferUsageHint.StaticDraw);
 
             VAO[0] = GL.GenVertexArray();
@@ -161,7 +161,6 @@ namespace Snake
             VBO[1] = GL.GenBuffer();
 
             GL.BindBuffer(BufferTarget.ArrayBuffer,VBO[1]);
-
             GL.BufferData(BufferTarget.ArrayBuffer, 1201*8*sizeof(float), IntPtr.Zero, BufferUsageHint.DynamicDraw);
 
             
@@ -177,6 +176,39 @@ namespace Snake
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, EBO);
             GL.BufferData(BufferTarget.ElementArrayBuffer, 1201*3*sizeof(uint), IntPtr.Zero, BufferUsageHint.DynamicDraw);
 
+
+            VBO[2] = GL.GenBuffer();
+
+            GL.BindBuffer(BufferTarget.ArrayBuffer,VBO[2]);
+            GL.BufferData(BufferTarget.ArrayBuffer, 12 * sizeof(float), IntPtr.Zero, BufferUsageHint.DynamicDraw);
+
+            VAO[2] = GL.GenVertexArray();
+            GL.BindVertexArray(VAO[2]);
+
+            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
+            GL.EnableVertexAttribArray(0);
+
+            VBO[3] = GL.GenBuffer();
+
+            GL.BindBuffer(BufferTarget.ArrayBuffer,VBO[3]);
+            GL.BufferData(BufferTarget.ArrayBuffer, 12 * sizeof(float), IntPtr.Zero, BufferUsageHint.DynamicDraw);
+
+            VAO[3] = GL.GenVertexArray();
+            GL.BindVertexArray(VAO[3]);
+
+            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
+            GL.EnableVertexAttribArray(0);
+
+            VBO[4] = GL.GenBuffer();
+
+            GL.BindBuffer(BufferTarget.ArrayBuffer,VBO[4]);
+            GL.BufferData(BufferTarget.ArrayBuffer, 12 * sizeof(float), IntPtr.Zero, BufferUsageHint.DynamicDraw);
+
+            VAO[4] = GL.GenVertexArray();
+            GL.BindVertexArray(VAO[4]);
+
+            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
+            GL.EnableVertexAttribArray(0);
 
             base.OnLoad();
 
@@ -195,22 +227,44 @@ namespace Snake
             
             GL.BindVertexArray(VAO[0]);
             GL.DrawArrays(PrimitiveType.LineLoop, 0, 4);
+            int headX,headY,tailX,tailY;
+            if(snake.iter==snake.begin)
+            {
+                headX=snake.queue[snake.end].first;
+                headY=snake.queue[snake.end].second;
+                tailX=snake.queue[snake.iter].first;
+                tailY=snake.queue[snake.iter].second;
+            }
+            else
+            {
+                headX=snake.queue[snake.iter-1].first;
+                headY=snake.queue[snake.iter-1].second;
+                tailX=snake.queue[snake.iter].first;
+                tailY=snake.queue[snake.iter].second;
+            }
 
             snakeVerticesList = new List<float>();
-            
+            float posX,posY;
             for(int i=snake.begin;i<=snake.end;++i)
             {
-                float posX=snake.queue[i].first*offset;
-                float posY=snake.queue[i].second*offset;
-                float[] node =
+                
+                posX=snake.queue[i].first*offset;
+                posY=snake.queue[i].second*offset;
+                int tempX=snake.queue[i].first;
+                int tempY=snake.queue[i].second;
+                if((tempX!=headX ||tempY!=headY) && (tempX!=tailX || tempY!=tailY))
                 {
-                    -0.9f+posX, -0.9f+posY, 0.0f, 
-                    -0.9f+posX, -0.855f+posY, 0.0f,  
-                    -0.855f+posX, -0.855f+posY, 0.0f,
-                    -0.855f+posX, -0.9f+posY, 0.0f
-                };
-                //Console.WriteLine(posX + " " + posY);
-                snakeVerticesList.AddRange(node);
+                    float[] node =
+                    {
+                        -0.9f+posX, -0.9f+posY, 0.0f, 
+                        -0.9f+posX, -0.855f+posY, 0.0f,  
+                        -0.855f+posX, -0.855f+posY, 0.0f,
+                        -0.855f+posX, -0.9f+posY, 0.0f
+                    };
+                    //Console.WriteLine(posX + " " + posY);
+                
+                    snakeVerticesList.AddRange(node);
+                }
             }
             
             float[] snakeVertices = snakeVerticesList.ToArray();
@@ -253,6 +307,33 @@ namespace Snake
             };
             */
 
+            posX=snake.fruitX*offset;
+            posY=snake.fruitY*offset;
+            float[] fruitVertices = 
+            {
+                -0.9f+posX, -0.9f+posY, 0.0f, 
+                -0.9f+posX, -0.855f+posY, 0.0f,  
+                -0.855f+posX, -0.855f+posY, 0.0f,
+                -0.855f+posX, -0.9f+posY, 0.0f
+            };
+            posX=headX*offset;
+            posY=headY*offset;
+            float[] tailVertices= 
+            {
+                -0.9f+posX, -0.9f+posY, 0.0f, 
+                -0.9f+posX, -0.855f+posY, 0.0f,  
+                -0.855f+posX, -0.855f+posY, 0.0f,
+                -0.855f+posX, -0.9f+posY, 0.0f
+            };
+            posX=tailX*offset;
+            posY=tailY*offset;
+            float[] headVertices=
+            {
+                -0.9f+posX, -0.9f+posY, 0.0f, 
+                -0.9f+posX, -0.855f+posY, 0.0f,  
+                -0.855f+posX, -0.855f+posY, 0.0f,
+                -0.855f+posX, -0.9f+posY, 0.0f
+            };
 
 
             GL.BindBuffer(BufferTarget.ArrayBuffer,VBO[1]);
@@ -264,7 +345,22 @@ namespace Snake
 
             //GL.DrawArrays(PrimitiveType.Triangles, 0, snakeVertices.Length);
             GL.DrawElements(PrimitiveType.Triangles, indices.Length, DrawElementsType.UnsignedInt, 0);
+            
 
+            GL.BindBuffer(BufferTarget.ArrayBuffer,VBO[2]);
+            GL.BufferSubData(BufferTarget.ArrayBuffer,(IntPtr)0,sizeof(float)*fruitVertices.Length,fruitVertices);
+            GL.BindVertexArray(VAO[2]);
+            GL.DrawArrays(PrimitiveType.LineLoop, 0, 4);
+            
+            GL.BindBuffer(BufferTarget.ArrayBuffer,VBO[3]);
+            GL.BufferSubData(BufferTarget.ArrayBuffer,(IntPtr)0,sizeof(float)*headVertices.Length,headVertices);
+            GL.BindVertexArray(VAO[3]);
+            GL.DrawArrays(PrimitiveType.LineLoop, 0, 4);
+
+            GL.BindBuffer(BufferTarget.ArrayBuffer,VBO[4]);
+            GL.BufferSubData(BufferTarget.ArrayBuffer,(IntPtr)0,sizeof(float)*tailVertices.Length,tailVertices);
+            GL.BindVertexArray(VAO[4]);
+            GL.DrawArrays(PrimitiveType.LineLoop, 0, 4);
 
 
             SwapBuffers();
@@ -272,22 +368,28 @@ namespace Snake
             base.OnRenderFrame(e);
 
         }
-    
+        bool ifStarted= false;
         protected override void OnUpdateFrame(FrameEventArgs e)// This function runs on every update frame.
         {
-            
-            if (KeyboardState.IsKeyDown(Keys.Escape)) //Close if ESC or Gameover
+            if(ifStarted)
             {
-                Close();
+                if (KeyboardState.IsKeyDown(Keys.Escape)) //Close if ESC or Gameover
+                {
+                    Close();
+                }
+                if(snake.gameOver) 
+                {
+                    Console.WriteLine("Game Over");
+                    //foreach(float i in snakeVerticesList) {Console.Write(i + ", ");}
+                    Close();
+                }
+                updateSnakeDir(); //Check for keys pressed and a ticks
+                tick();
             }
-            if(snake.gameOver) 
+            else 
             {
-                Console.WriteLine("Game Over");
-                foreach(float i in snakeVerticesList) {Console.Write(i + ", ");}
-                Close();
+                if(KeyboardState.IsKeyDown(Keys.W) || KeyboardState.IsKeyDown(Keys.S) || KeyboardState.IsKeyDown(Keys.A) || KeyboardState.IsKeyDown(Keys.D)) ifStarted=true;
             }
-            updateSnakeDir(); //Check for keys pressed and a ticks
-            tick();
             base.OnUpdateFrame(e);
         }
         protected override void OnUnload()
